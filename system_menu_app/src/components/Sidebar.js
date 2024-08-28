@@ -1,12 +1,10 @@
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext } from "react";
 import {ChevronLeft , ChevronRight} from "../assets/IconSvgs";
-import { Outlet, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   atom,
-  selector,
   useRecoilState,
-  useRecoilValue,
 } from 'recoil';
 
 
@@ -67,7 +65,7 @@ export function SidebarItem({ icon, text, active, alert, children, link }) {
         
         </Link>
         </li>
-        { text=="System" && (
+        { text==="System" && (
         <SidebarContext.Provider value={{ expanded }}>
 
                         <div

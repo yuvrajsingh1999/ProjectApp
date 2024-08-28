@@ -1,13 +1,13 @@
-import logo from './logo.svg';
+
 import './App.css';
 import Sidebar, { SidebarItem, SidebarSubItem } from "./components/Sidebar";
-import {SolidSquares , OutlinedSquares, SolidFolder, OutlinedFolder} from "./assets/IconSvgs";
+import {SolidSquares, SolidFolder, OutlinedFolder} from "./assets/IconSvgs";
 import {Routes, Route } from "react-router-dom";
 import SystemCode from "./components/Pages/SystemCode";
 import UserGroup from "./components/Pages/UserGroup";
 import Properties from "./components/Pages/Properties";
 import Menus from "./components/Pages/Menus";
-import Competition from "./components/Pages/Competition";
+import Competition from "./components/Pages/Competition"; 
 import ApiLists from "./components/Pages/ApiLists";
 
 function App() {
