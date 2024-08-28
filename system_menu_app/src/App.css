@@ -1,0 +1,92 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.displayNone {
+  display: none;
+}
+/* nested-structure.css */
+.nested-list {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.nested-list ul {
+  margin-left: 2rem;
+  position: relative;
+}
+
+.nested-list li {
+  position: relative;
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.nested-list li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background-color: #ddd; /* Line color */
+  z-index: -1;
+}
+
+.nested-list li::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  left: 0;
+  width: 2rem; /* Adjust based on desired space between lines */
+  height: 1px;
+  background-color: #ddd; /* Line color */
+  z-index: -1;
+}
+
+.nested-list li:last-child::before {
+  display: none;
+}
+
+.nested-list li ul {
+  margin-left: 0;
+}
+
+.nested-list li ul li {
+  padding-left: 1.5rem;
+}
