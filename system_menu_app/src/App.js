@@ -8,7 +8,7 @@ import UserGroup from "./components/Pages/UserGroup";
 import Properties from "./components/Pages/Properties";
 import Menus from "./components/Pages/Menus";
 import Competition from "./components/Pages/Competition"; 
-import ApiLists from "./components/Pages/ApiLists";
+import ApiLists from "./components/Pages/ApiLists"; 
 
 function App() {
   return (
@@ -25,7 +25,6 @@ function App() {
           <SidebarItem icon={<OutlinedFolder/>} text="Users & Group" link="/user-group"/>
           <SidebarItem icon={<OutlinedFolder/>} text="Competition" link="/competition"/>
         </Sidebar>
-
         <NavRoute />
       </div>
     </>
