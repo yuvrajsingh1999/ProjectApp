@@ -20,7 +20,7 @@ export default function Sidebar({ children }) {
     return (
         <>
             <aside className="h-screen">
-                <nav className={`h-full ${expanded ? "w-60" : ""} flex flex-col bg-slate-800 border-r shadow-sm rounded-3xl`}>
+                <nav className={`h-full ${expanded ? "w-60 smallscreenNavShort" : "smallscreenNav"} flex flex-col bg-slate-800 border-r shadow-sm rounded-3xl`}>
                     <div className="p-4 pb-2 flex justify-between items-center">
                         <span className="text-white">{expanded ? `${APP_NAME}` : ""}</span>
                         <button onClick={() => setExpand((curr) => !curr)}>
@@ -34,6 +34,11 @@ export default function Sidebar({ children }) {
                     </SidebarContext.Provider>
                     
                 </nav>
+                <div className="smallscreen p-4 pb-2 flex justify-between items-center">
+                        <button onClick={() => setExpand((curr) => !curr)}>
+                            {expanded ? <ChevronLeft /> : <ChevronRight />}
+                        </button>
+                </div>
             </aside>
         </>
     )

@@ -167,3 +167,37 @@
 .tree details[open] > summary::before {
   background-position: calc(-2 * var(--radius)) 0;
 }
+.smallscreen{
+  display: none;
+}
+@media screen and (max-width: 992px) {
+ #root > div {
+  display: unset !important;
+ }
+ aside .smallscreenNav{
+  display: none !important;
+ }
+.smallscreen{
+  display: block !important;
+} 
+.smallscreen button{
+  vertical-align: bottom !important;
+}
+.smallscreen svg{
+  color: black !important;
+  margin-left: 12px !important;
+} 
+.h-screen {
+  height: 5% !important;
+  width: 100vw !important;
+}
+.smallScreenMenu{
+  width: 100% !important;
+}
+.smallscreenNavShort{
+  z-index: 12 !important;
+  position: absolute !important;
+  margin: 1.5rem !important;
+  top: 1px !important;
+}
+}

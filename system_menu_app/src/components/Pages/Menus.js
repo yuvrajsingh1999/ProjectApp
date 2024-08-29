@@ -88,7 +88,7 @@ export default function Menus() {
      detailsRefs.current.forEach(details => {
       if (details) details.open = false;
     });
-     
+
     setEditOpenTab(false);
     setAddOpenTab(false);
   }
@@ -139,7 +139,7 @@ export default function Menus() {
   }
   return (
     <>
-    <div className="flex flex-col p-6 w-2/5">
+    <div className="flex flex-col p-6 w-2/5 smallScreenMenu">
       <Breadcrumps link={pathname.replace(/^\/+/g, '')}/>
     <div className="p-4 md:p-6 lg:p-6">
     <MenuDropdown setMainMenu={setMainMenu} />
@@ -161,7 +161,7 @@ export default function Menus() {
     </div>
     </div>
     {clickedNodeDepth !== null && (editOpenTab || addOpenTab) && (
-        <div className="w-2/5">
+        <div className="p-6 w-2/5 smallScreenMenu">
         {addOpenTab && 
         <span className="text-lg">Add New menu</span>
         }
