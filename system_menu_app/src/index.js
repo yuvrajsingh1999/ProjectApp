@@ -7,13 +7,18 @@ import {
   RecoilRoot
 } from 'recoil';
 import { BrowserRouter} from "react-router-dom";
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+const queryClient = new QueryClient();
+
 root.render(
   <React.StrictMode>
   <BrowserRouter>
   <RecoilRoot>
+  <QueryClientProvider client={queryClient}>
     <App />
+    </QueryClientProvider>
     </RecoilRoot>
   </BrowserRouter>
   </React.StrictMode>

@@ -5,7 +5,11 @@ import {SystemMenuList, MenuList} from "../../assets/DemoData";
 import {
   atom,
   useRecoilState,
+   selector,
+   useRecoilValue,
 } from 'recoil';
+import {API_GET_SYSTEM_URL} from "../../Env";
+import { useQuery } from '@tanstack/react-query';
 
 const systemMenuList = atom({
   key: 'systemMenuList', 
@@ -27,6 +31,26 @@ const editOpen = atom({
   key: 'editOpen', 
   default: false, 
 });
+const addOpen = atom({
+  key: 'addOpen', 
+  default: false, 
+});
+const nodeIdBtn = atom({
+  key: 'nodeIdBtn', 
+  default: null, 
+});
+const filteredMenuList = selector({
+  key: 'filteredMenuList',
+  get: ({ get }) => {
+    const mainMenu = get(mainMenuId);
+    const menuListValue = get(menuList);
+    console.log(menuListValue);
+    // Filter menuList based on the mainMenuId
+    return menuListValue.filter(item => item.mainMenuId === parseInt(mainMenu));
+  },
+});
+
+
 
 export default function Menus() {
   const detailsRefs = useRef([]);
@@ -36,30 +60,37 @@ export default function Menus() {
   const [menu, setMenu] = useRecoilState(menuList);
   const [clickedNodeDepth, setClickedNodeDepth] = useRecoilState(uniClickDep);
   const [editOpenTab, setEditOpenTab] = useRecoilState(editOpen);
+  const [addOpenTab, setAddOpenTab] = useRecoilState(addOpen);
   const [mainMenu, setMainMenu] = useRecoilState(mainMenuId);
-  var nestedTree = null;
-  
+  const menuItems = useRecoilValue(filteredMenuList);
+  var nestedTree = transformToTree(menuItems);
   useEffect(() => {
     //eslint-disable-next-line
-    nestedTree = transformToTree(menu);
+    nestedTree = transformToTree(menuItems);  
   }, [menu]);
 
-  useEffect(() => {
-    //eslint-disable-next-line
-    nestedTree = transformToTree(menu);
-    console.log(mainMenu);
+  useEffect(() => {   
+    //eslint-disable-next-line 
+    nestedTree = transformToTree(menuItems);
   }, [mainMenu]);
+
 
   const handleExpandAll = () => {
      detailsRefs.current.forEach(details => {
       if (details) details.open = true;
     });
+
+    setEditOpenTab(false);
+    setAddOpenTab(false);
   }
 
   const handleCollapseAll = () => {
      detailsRefs.current.forEach(details => {
       if (details) details.open = false;
     });
+     
+    setEditOpenTab(false);
+    setAddOpenTab(false);
   }
    
   const handleNodeClick = (node, depth) => {
@@ -90,13 +121,22 @@ export default function Menus() {
 
   const handleSubmitEdit =() => {
     var newname = document.getElementById('name').value;
+    if(editOpenTab){
     setMenu(prevNodes => 
             prevNodes.map(node =>
                 node.id === clickedNodeDepth.nodeId ? { ...node, name: newname } : node
             )
         );
+    }
+    if(addOpenTab){
+      setMenu((prevMenuList) => [
+      ...prevMenuList,
+      { id: prevMenuList.length + 1 , name: newname, parentId: clickedNodeDepth.nodeId , mainMenuId: parseInt(mainMenu) }
+    ]);
+    }
+    setEditOpenTab(false);
+    setAddOpenTab(false);
   }
-
   return (
     <>
     <div className="flex flex-col p-6 w-2/5">
@@ -112,18 +152,25 @@ export default function Menus() {
     </div>
      <div className="p-6 bg-gray-100 ">
      {
-      (mainMenu && nestedTree)
-      ?
-      <><RenderTree nodes={nestedTree} setEditOpenTab={setEditOpenTab} toggleOpen={el => detailsRefs.current.push(el)} onNodeClick={handleNodeClick} />
-  </>
-  :<><span>No Data</span></>
-     }
+      mainMenu && nestedTree ? 
+      <RenderTree nodes={nestedTree} setAddOpenTab={setAddOpenTab} setEditOpenTab={setEditOpenTab} toggleOpen={el => detailsRefs.current.push(el)} onNodeClick={handleNodeClick} />
+      :
+      <span>No Data</span>
+      }
      
     </div>
     </div>
-    {clickedNodeDepth !== null && editOpenTab && (
+    {clickedNodeDepth !== null && (editOpenTab || addOpenTab) && (
         <div className="w-2/5">
+        {addOpenTab && 
+        <span className="text-lg">Add New menu</span>
+        }
+        {editOpenTab && 
+        <span className="text-lg">Edit menu</span>
+        }
+        
           <form class="max-w-sm mx-auto w-full">
+  {editOpenTab && <>
   <div class="mb-5">
     <label for="menuId" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Menu ID</label>
     <input type="text" readonly value={clickedNodeDepth.nodeId} id="menuId" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
@@ -137,6 +184,8 @@ export default function Menus() {
     <label for="parent" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Parent Data</label>
     <input type="text" readonly value={clickedNodeDepth.parentName} id="parent" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
   </div>
+  </>}
+  
   <div class="mb-5">
     <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
     <input type="text" defaultValue={clickedNodeDepth.nodeName} id="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
@@ -149,13 +198,19 @@ export default function Menus() {
   );
 }
 
-function RenderTree({nodes, depth = 0, onNodeClick, toggleOpen, setEditOpenTab})  {
+function RenderTree({nodes, depth = 0, onNodeClick, toggleOpen, setEditOpenTab, setAddOpenTab})  {
 
+  const [selectedNodeBtn, setSelectedNodeBtn] = useRecoilState(nodeIdBtn);
   const handleClick = (nData) => {
     onNodeClick(nData,depth);
     setEditOpenTab(false);
-    document.getElementById(nData.id).style.display = 'initial';
+    setSelectedNodeBtn(nData.id);
   };
+  const handleAddNew = (nData) => {
+    onNodeClick(nData,depth);
+    setSelectedNodeBtn(nData.id);
+    setAddOpenTab(true);
+  }
   return (
       <ul class="tree">
       {nodes.map(node => (
@@ -163,7 +218,7 @@ function RenderTree({nodes, depth = 0, onNodeClick, toggleOpen, setEditOpenTab})
         <li key={node.id}>
           <details ref={toggleOpen} >
             <summary  onDoubleClick={() => setEditOpenTab(true)} onClick={(e) => handleClick(node)} className={node.children && node.children.length === 0 ? "noChild" : ""} >{node.name} 
-            <button id={node.id} type="button" style={{verticalAlign: 'bottom', display: 'none'}} class=" text-xs text-white AddChildBtn bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full mx-2.5 p-0.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            <button id={node.id} type="button"  onClick={() => handleAddNew(node)} style={{verticalAlign: 'bottom',  display: selectedNodeBtn === node.id ? 'initial' : 'none'}} class=" text-xs text-white AddChildBtn bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full mx-2.5 p-0.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
                 <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
               </svg>
@@ -172,7 +227,7 @@ function RenderTree({nodes, depth = 0, onNodeClick, toggleOpen, setEditOpenTab})
 </summary>
             
           {node.children && node.children.length > 0 && <RenderTree nodes={node.children} toggleOpen={toggleOpen} depth={depth + 1}
-                onNodeClick={onNodeClick} setEditOpenTab={setEditOpenTab}/>}
+                onNodeClick={onNodeClick} setEditOpenTab={setEditOpenTab} setAddOpenTab={setAddOpenTab}/>}
           </details>
         </li>
       ))}
@@ -185,7 +240,26 @@ function RenderTree({nodes, depth = 0, onNodeClick, toggleOpen, setEditOpenTab})
 function MenuDropdown({setMainMenu}) {
   //eslint-disable-next-line
   const [systemMenu, setSystemMenu] = useRecoilState(systemMenuList);
+
+  const useFetchSystemMenuList = () => {
+
+  return useQuery({
+    queryKey: ['systemMenuList'],
+    queryFn: async () => {
+      const response = await fetch(`${API_GET_SYSTEM_URL}`); // Update with your API endpoint
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSystemMenu(data); // Update Recoil state with the fetched data
+    },
+  });
+};
   
+  useFetchSystemMenuList();
+
   const handleAddMenu =(event) => {
     setMainMenu(event.target.value);
   }
@@ -205,10 +279,7 @@ function MenuDropdown({setMainMenu}) {
             <MenuListItem data={itm}/>
             ))
         }
-        <option value="addMenu">
-        <button  type="button" class="select-none rounded-lg bg-gradient-to-tr from-gray-900 to-gray-800 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-gray-900/10 transition-all hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-  data-ripple-light="true" data-dialog-target="dialog">Add System Menu</button>
-     </option>
+        
     </select>
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="h-5 w-5 ml-1 absolute top-2.5 right-2.5 text-slate-700">
       <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
