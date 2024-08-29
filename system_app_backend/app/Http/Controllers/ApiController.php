@@ -9,12 +9,12 @@ class ApiController extends Controller
 {
     public function getSystemMenu()
     {
-        $books = Book::all();
+        $books = SystemMenuList::all();
         return response()->json($books);
     }
     public function getMenus(Request $request)
     {
-        $book = Book::create($request->all());
-        return response()->json($book, 201);
+        // $book = MenuList::create($request->all());
+        // return response()->json($book, 201);
     }
 }

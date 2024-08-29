@@ -6,6 +6,7 @@ import {
   atom,
   useRecoilState,
 } from 'recoil';
+import {APP_NAME} from "../Env";
 
 
 const SidebarContext = createContext();
@@ -21,7 +22,7 @@ export default function Sidebar({ children }) {
             <aside className="h-screen">
                 <nav className={`h-full ${expanded ? "w-60" : ""} flex flex-col bg-slate-800 border-r shadow-sm rounded-3xl`}>
                     <div className="p-4 pb-2 flex justify-between items-center">
-                        {expanded ? "Logo" : ""}
+                        <span className="text-white">{expanded ? `${APP_NAME}` : ""}</span>
                         <button onClick={() => setExpand((curr) => !curr)}>
                             {expanded ? <ChevronLeft /> : <ChevronRight />}
                         </button>

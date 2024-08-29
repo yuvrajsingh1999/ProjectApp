@@ -16,7 +16,7 @@ class CreateMenuListsTable extends Migration
         Schema::create('menu_lists', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->index('parent_system_id');
+            $table->bigInteger('parent_system_id')->nullable();
             $table->foreign('parent_system_id')->references('id')->on('system_menu_lists')->onDelete('cascade');
             $table->bigInteger('parent_menu_id')->nullable();
             $table->timestamps();

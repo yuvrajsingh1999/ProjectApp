@@ -1,6 +1,4 @@
-
-import {ChevronDownArrow} from "../../assets/IconSvgs";
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import React, { useRef, useEffect } from 'react';
 import Breadcrumps from "./Breadcrumps";
 import { useLocation } from 'react-router-dom';
 import {SystemMenuList, MenuList} from "../../assets/DemoData";
@@ -13,65 +11,183 @@ const systemMenuList = atom({
   key: 'systemMenuList', 
   default: SystemMenuList, 
 });
+const mainMenuId = atom({
+  key: 'mainMenuId', 
+  default: null, 
+});
 const menuList = atom({
   key: 'menuList', 
   default: MenuList, 
 });
+const uniClickDep = atom({
+  key: 'uniClickDep', 
+  default: { nodeName: null, parentName: null, depth: null, nodeId: null }, 
+});
+const editOpen = atom({
+  key: 'editOpen', 
+  default: false, 
+});
 
 export default function Menus() {
+  const detailsRefs = useRef([]);
   const location = useLocation();
-  const { hash, pathname, search } = location;
+  const {pathname} = location;
+  //eslint-disable-next-line
   const [menu, setMenu] = useRecoilState(menuList);
-  console.log("Test: ",menu);
+  const [clickedNodeDepth, setClickedNodeDepth] = useRecoilState(uniClickDep);
+  const [editOpenTab, setEditOpenTab] = useRecoilState(editOpen);
+  const [mainMenu, setMainMenu] = useRecoilState(mainMenuId);
+  var nestedTree = null;
+  
+  useEffect(() => {
+    //eslint-disable-next-line
+    nestedTree = transformToTree(menu);
+  }, [menu]);
+
+  useEffect(() => {
+    //eslint-disable-next-line
+    nestedTree = transformToTree(menu);
+    console.log(mainMenu);
+  }, [mainMenu]);
+
+  const handleExpandAll = () => {
+     detailsRefs.current.forEach(details => {
+      if (details) details.open = true;
+    });
+  }
+
+  const handleCollapseAll = () => {
+     detailsRefs.current.forEach(details => {
+      if (details) details.open = false;
+    });
+  }
+   
+  const handleNodeClick = (node, depth) => {
+    const nodeName = node.name;
+    const nodeId = node.id;
+    const parentName = findParentNodeName(node.id, nestedTree);
+    setClickedNodeDepth({nodeName, parentName, depth, nodeId});
+  };
+  const findParentNodeName = (id, nodes) => {
+     let parentName = null;
+  const traverse = (nodes) => {
+    for (const node of nodes) {
+      if (node.children) {
+        for (const child of node.children) {
+          if (child.id === id) {
+            parentName = node.name;
+            return; // Exit the traversal when parent is found
+          }
+          traverse(node.children); // Recursively search in the children
+        }
+      }
+    }
+  };
+
+  traverse(nodes);
+  return parentName;
+  };
+
+  const handleSubmitEdit =() => {
+    var newname = document.getElementById('name').value;
+    setMenu(prevNodes => 
+            prevNodes.map(node =>
+                node.id === clickedNodeDepth.nodeId ? { ...node, name: newname } : node
+            )
+        );
+  }
 
   return (
     <>
-    <div className="flex flex-col p-6">
+    <div className="flex flex-col p-6 w-2/5">
       <Breadcrumps link={pathname.replace(/^\/+/g, '')}/>
     <div className="p-4 md:p-6 lg:p-6">
-    <MenuDropdown />
+    <MenuDropdown setMainMenu={setMainMenu} />
+    </div>
+    <div>
+    <button onClick={handleExpandAll} type="button" class="w-auto text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
+    Expand All</button>
+    <button onClick={handleCollapseAll} type="button" class="w-auto text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+    Collapse All</button>
     </div>
      <div className="p-6 bg-gray-100 ">
-      <ul className="nested-list list-none">
-        <li className="text-lg font-semibold">Parent Item 1
-          <ul className="list-none">
-            <li>Child Item 1</li>
-            <li>Child Item 2
-              <ul className="list-none">
-                <li>Grandchild Item 1</li>
-                <li>Grandchild Item 2</li>
-              </ul>
-            </li>
-            <li className="text-sm text-gray-500">Child Item 3</li>
-          </ul>
-        </li>
-        <li className="text-lg font-semibold">Parent Item 2
-          <ul className="list-none">
-            <li>Child Item A</li>
-            <li>Child Item B</li>
-          </ul>
-        </li>
-        <li className="text-lg font-semibold">Parent Item 3
-          <ul className="list-none">
-            <li>Child Item X</li>
-            <li>Child Item Y</li>
-            <li>Child Item Z</li>
-          </ul>
-        </li>
-      </ul>
+     {
+      (mainMenu && nestedTree)
+      ?
+      <><RenderTree nodes={nestedTree} setEditOpenTab={setEditOpenTab} toggleOpen={el => detailsRefs.current.push(el)} onNodeClick={handleNodeClick} />
+  </>
+  :<><span>No Data</span></>
+     }
+     
     </div>
     </div>
+    {clickedNodeDepth !== null && editOpenTab && (
+        <div className="w-2/5">
+          <form class="max-w-sm mx-auto w-full">
+  <div class="mb-5">
+    <label for="menuId" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Menu ID</label>
+    <input type="text" readonly value={clickedNodeDepth.nodeId} id="menuId" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+  </div>
+  <div class="mb-5">
+    <label for="depth" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Depth</label>
+    <input type="text" readonly value={clickedNodeDepth.depth} id="depth" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+  </div>
+  
+  <div class="mb-5">
+    <label for="parent" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Parent Data</label>
+    <input type="text" readonly value={clickedNodeDepth.parentName} id="parent" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+  </div>
+  <div class="mb-5">
+    <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+    <input type="text" defaultValue={clickedNodeDepth.nodeName} id="name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+  </div>
+  <button type="button" onClick={handleSubmitEdit} class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm w-full  px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Save</button>
+</form>
+        </div>
+      )}
     </>
   );
 }
 
+function RenderTree({nodes, depth = 0, onNodeClick, toggleOpen, setEditOpenTab})  {
+
+  const handleClick = (nData) => {
+    onNodeClick(nData,depth);
+    setEditOpenTab(false);
+    document.getElementById(nData.id).style.display = 'initial';
+  };
+  return (
+      <ul class="tree">
+      {nodes.map(node => (
+
+        <li key={node.id}>
+          <details ref={toggleOpen} >
+            <summary  onDoubleClick={() => setEditOpenTab(true)} onClick={(e) => handleClick(node)} className={node.children && node.children.length === 0 ? "noChild" : ""} >{node.name} 
+            <button id={node.id} type="button" style={{verticalAlign: 'bottom', display: 'none'}} class=" text-xs text-white AddChildBtn bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full mx-2.5 p-0.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+              </svg>
+              <span class="sr-only">Icon description</span>
+            </button>
+</summary>
+            
+          {node.children && node.children.length > 0 && <RenderTree nodes={node.children} toggleOpen={toggleOpen} depth={depth + 1}
+                onNodeClick={onNodeClick} setEditOpenTab={setEditOpenTab}/>}
+          </details>
+        </li>
+      ))}
+      </ul>
+);
+}
 
 
-function MenuDropdown() {
+
+function MenuDropdown({setMainMenu}) {
+  //eslint-disable-next-line
   const [systemMenu, setSystemMenu] = useRecoilState(systemMenuList);
   
-  const handleAddMenu =() => {
-    console.log("Test122",systemMenu);
+  const handleAddMenu =(event) => {
+    setMainMenu(event.target.value);
   }
   return (
   <div class="w-full max-w-sm min-w-[200px]">
@@ -81,17 +197,18 @@ function MenuDropdown() {
       
 
       <div class="relative">
-    <select
+    <select  onChange={handleAddMenu}
         class="w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md appearance-none cursor-pointer">
+        <option value="">Select Below Option</option>
         {
            SystemMenuList && SystemMenuList.map((itm) => (
             <MenuListItem data={itm}/>
             ))
         }
-        <option onClick={handleAddMenu} >
-        <button type="button" class="select-none rounded-lg bg-gradient-to-tr from-gray-900 to-gray-800 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-gray-900/10 transition-all hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+        <option value="addMenu">
+        <button  type="button" class="select-none rounded-lg bg-gradient-to-tr from-gray-900 to-gray-800 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-gray-900/10 transition-all hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
   data-ripple-light="true" data-dialog-target="dialog">Add System Menu</button>
-        </option>
+     </option>
     </select>
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="h-5 w-5 ml-1 absolute top-2.5 right-2.5 text-slate-700">
       <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
@@ -137,3 +254,30 @@ function MenuListItem({data}) {
       </option>
   )
 }
+
+const transformToTree = (menuList) => {
+  const map = new Map();
+  const tree = [];
+
+  // Step 1: Initialize all nodes in the map with empty children array
+  menuList.forEach(item => {
+    map.set(item.id, { ...item, children: [] });
+  });
+  // Step 2: Build the tree by linking children to their parent nodes
+  menuList.forEach(item => {
+    const node = map.get(item.id);
+    if (item.parentId === null) {
+      // Top-level item
+      tree.push(node);
+    } else {
+      // Non-top-level item
+      const parentNode = map.get(item.parentId);
+
+    if (parentNode) {
+        parentNode.children.push(node);
+      }
+    }
+
+  });
+  return tree;
+};
